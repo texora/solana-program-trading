@@ -60,7 +60,7 @@ pub fn initialize_vault(
     ); // 10 USD assuming 6 decimal places
 
     vault.vault_authority = ctx.accounts.vault_authority.key();
-    vault.vault_authority_bump = ctx.bumps.vault_authority.unwrap();
+    vault.vault_authority_bump = ctx.bumps.vault_authority;
     vault.strategy_id = params.strategy_id;
     vault.bond_price = 1.0;
     vault.tvl = params.initial_deposit;
