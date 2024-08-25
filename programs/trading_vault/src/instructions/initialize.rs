@@ -60,14 +60,15 @@ pub fn initialize_vault(
     ); // 10 USD assuming 6 decimal places
 
     vault.vault_authority = ctx.accounts.vault_authority.key();
+    vault.vault_authority_bump = ctx.bumps.vault_authority.unwrap();
     vault.strategy_id = params.strategy_id;
     vault.bond_price = 1.0;
     vault.tvl = params.initial_deposit;
     vault.leader = *leader.to_account_info().key;
     vault.is_trading_paused = false;
 
-    user.deposit = params.initial_deposit;
-    user.bond_amount = params.initial_deposit;
+    user.deposit_value = params.initial_deposit;
+    user.bond_amount = params.initial_deposit / 1;
     user.deposit_time = Clock::get()?.unix_timestamp;
 
     Ok(())
