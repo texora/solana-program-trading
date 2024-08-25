@@ -1,4 +1,4 @@
-use anchor_lang::prelude::*;
+use anchor_lang::{prelude::*, solana_program::pubkey};
 use anchor_spl::token::Transfer;
 
 #[account]
@@ -8,6 +8,8 @@ pub struct Vault {
     pub tvl: u64,
     pub leader: Pubkey,
     pub is_trading_paused: bool,
+
+    pub profit_vault: Pubkey,
 
     pub vault_authority: Pubkey,
     pub vault_authority_bump: u8,
