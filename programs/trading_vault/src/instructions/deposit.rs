@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, mint_to, Mint, MintTo, Token, TokenAccount};
+use anchor_spl::{associated_token::AssociatedToken, token::{self, mint_to, Mint, MintTo, Token, TokenAccount}};
 
 use crate::{User, Vault};
 
@@ -46,6 +46,7 @@ pub struct Deposit<'info> {
     pub depositor_token_account: Account<'info, TokenAccount>,
 
     pub token_program: Program<'info, Token>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
 }
 
@@ -67,7 +68,7 @@ pub fn deposit(ctx: Context<Deposit>, params: DepositParams) -> Result<()> {
         params.amount
     )?;
 
-    let bond_amount = (params.amount as f64 / vault.bond_price) as u64;
+    let bond_amount = (params.amount as f64 / vault.bond_price) as u64 * 10u64.pow(ctx.accounts.mint_account.decimals as u32);
 
     // PDA signer seeds
     let signer_seeds: &[&[&[u8]]] = &[&[b"mint", &[ctx.bumps.mint_account]]];
@@ -84,16 +85,18 @@ pub fn deposit(ctx: Context<Deposit>, params: DepositParams) -> Result<()> {
             },
             signer_seeds
         ),
-        bond_amount * 10u64.pow(ctx.accounts.mint_account.decimals as u32), 
+        bond_amount, 
     );
 
     vault.tvl += params.amount;
+    vault.bond_supply += bond_amount;
 
     user.deposit_value += params.amount;
     user.bond_amount += bond_amount;
     user.deposit_time = Clock::get()?.unix_timestamp;
 
-    // recalculate bond price
+    // recalculate bond price according to strategy
+
 
     Ok(())
 }
