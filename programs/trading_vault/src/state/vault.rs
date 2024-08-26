@@ -9,7 +9,7 @@ pub struct Vault {
     pub leader: Pubkey,
     pub is_trading_paused: bool,
 
-    pub profit_vault: Pubkey,
+    pub backend_wallet: Pubkey,
 
     pub vault_authority: Pubkey,
     pub vault_authority_bump: u8,
