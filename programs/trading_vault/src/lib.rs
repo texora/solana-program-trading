@@ -26,4 +26,16 @@ pub mod trading_vault {
     pub fn withdraw(ctx: Context<Withdraw>, params: WithdrawParams) -> Result<()> {
         withdraw::withdraw(ctx, params)
     }
+
+    pub fn pause_trading(ctx: Context<PauseTrading>) -> Result<()> {
+        pause_trading::pause_trading(ctx)
+    }
+
+    pub fn close_position(ctx: Context<ClosePosition>) -> Result<()> {
+        close_position::close_position(ctx)
+    }
+
+    pub fn terminate_vault(ctx: Context<TerminateVault>) -> Result<()> {
+        terminate_vault::terminate_vault(ctx)
+    }
 }

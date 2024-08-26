@@ -92,6 +92,7 @@ pub fn deposit(ctx: Context<Deposit>, params: DepositParams) -> Result<()> {
     );
 
     vault.tvl += params.amount;
+    vault.deposit_value += params.amount;
     vault.bond_supply += bond_amount;
 
     user.deposit_value += params.amount;

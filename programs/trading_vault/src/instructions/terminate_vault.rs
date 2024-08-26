@@ -1,11 +1,14 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{Token, TokenAccount};
 
 use crate::Vault;
 
 #[derive(Accounts)]
 pub struct TerminateVault<'info> {
-    #[account(mut, has_one = leader)]
+    #[account(
+        mut,
+        seeds = [b"vault", vault.leader.key().as_ref()],
+        bump,
+    )]
     pub vault: Account<'info, Vault>,
     pub leader: Signer<'info>,
 }
@@ -17,5 +20,8 @@ pub fn terminate_vault(ctx: Context<TerminateVault>) -> Result<()> {
     // Close all positions and distribute funds
 
     vault.tvl = 0;
+    vault.deposit_value = 0;
+    vault.bond_price = 0.0_f64;
+    vault.bond_supply = 0;
     Ok(())
 }

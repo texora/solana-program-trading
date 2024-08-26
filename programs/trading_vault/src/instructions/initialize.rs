@@ -20,7 +20,7 @@ pub struct InitializeVault<'info> {
     pub user: Account<'info, User>,
 
     #[account(mut)]
-    pub backend_wallet: AccountInfo<'info>,
+    pub backend_wallet: Signer<'info>,
 
     #[account(
         init,
@@ -30,6 +30,7 @@ pub struct InitializeVault<'info> {
         space = Vault::LEN
     )]
     pub vault: Account<'info, Vault>,
+    /// CHECK:
     #[account(
         seeds = [b"vault_authority"],
         bump,
@@ -58,6 +59,14 @@ pub struct InitializeVault<'info> {
     )]
     pub metadata_account: UncheckedAccount<'info>,
     
+    #[account(
+        init_if_needed,
+        payer = backend_wallet,
+        constraint = vault_pay_token_account.mint == leader_pay_token_account.mint,
+        constraint = vault_pay_token_account.owner == vault_authority.key(),
+        space = 165,
+    )]
+    pub vault_pay_token_account: Account<'info, TokenAccount>,
     #[account(mut)]
     pub leader_pay_token_account: Account<'info, TokenAccount>,
     // Create Associated Token Account, if needed
@@ -76,7 +85,6 @@ pub struct InitializeVault<'info> {
     pub rent: Sysvar<'info, Rent>,
     pub associated_token_program: Program<'info, AssociatedToken>,
 }
-
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct InitializeVaultParams {
     pub strategy_id: String,
@@ -102,6 +110,7 @@ pub fn initialize_vault(
     vault.backend_wallet = ctx.accounts.backend_wallet.key();
     vault.strategy_id = params.strategy_id;
     vault.bond_price = 1.0;
+    vault.deposit_value = params.initial_deposit;
     vault.tvl = params.initial_deposit;
     vault.leader = *leader.to_account_info().key;
     vault.is_trading_paused = false;
@@ -140,6 +149,14 @@ pub fn initialize_vault(
         None,  // Collection details
     )?;
     msg!("Token created successfully.");
+
+    vault.transfer_tokens_from_user(
+        leader.to_account_info(),
+        ctx.accounts.vault_pay_token_account.to_account_info(),
+        ctx.accounts.vault_authority.to_account_info(),
+        ctx.accounts.token_program.to_account_info(),
+        params.initial_deposit
+    )?;
 
     let bond_amount = params.initial_deposit / 1 * 10u64.pow(ctx.accounts.mint_account.decimals as u32);
     
