@@ -4,7 +4,11 @@ use crate::Vault;
 
 #[derive(Accounts)]
 pub struct PauseTrading<'info> {
-    #[account(mut, has_one = leader)]
+    #[account(
+        mut,
+        seeds = [b"vault", vault.leader.key().as_ref()],
+        bump,
+    )]
     pub vault: Account<'info, Vault>,
     pub leader: Signer<'info>,
 }

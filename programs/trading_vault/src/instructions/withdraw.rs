@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, burn, Burn, Mint, Token, TokenAccount};
+use anchor_spl::token::{burn, Burn, Mint, Token, TokenAccount};
 
-use crate::{error::*, user, User, Vault, TOKEN_DECIMALS};
+use crate::{error::*, User, Vault, TOKEN_DECIMALS};
 
 #[derive(Accounts)]
 pub struct Withdraw<'info> {
@@ -98,6 +98,8 @@ pub fn withdraw(ctx: Context<Withdraw>, params: WithdrawParams) -> Result<()> {
         signer_seeds,
     );
     burn(cpi_ctx, bond_value)?;
+
+    // recalculate bond price
 
     Ok(())
 }
