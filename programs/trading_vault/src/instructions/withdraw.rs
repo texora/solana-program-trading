@@ -1,65 +1,103 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Token, TokenAccount};
+use anchor_spl::token::{self, burn, Burn, Mint, Token, TokenAccount};
 
-use crate::{error::*, Vault};
+use crate::{error::*, user, User, Vault, TOKEN_DECIMALS};
 
 #[derive(Accounts)]
 pub struct Withdraw<'info> {
-    #[account(mut)]
+    #[account(
+        mut,
+        seeds = [b"vault", vault.leader.key().as_ref()],
+        bump,
+    )]
     pub vault: Account<'info, Vault>,
+    #[account(
+        seeds = [b"vault_authority"],
+        bump,
+        )]
+    pub vault_authority: AccountInfo<'info>,
     #[account(mut)]
     pub depositor: Signer<'info>,
+    #[account(
+        init_if_needed,
+        seeds = [b"user", depositor.key().as_ref()],
+        bump,
+        payer = depositor,
+        space = User::LEN
+    )]
+    pub user: Account<'info, User>,
+    // Mint account address is a PDA
+    #[account(
+        mut,
+        seeds = [b"mint"],
+        bump
+    )]
+    pub mint_account: Account<'info, Mint>,
     #[account(mut)]
     pub depositor_pay_token_account: Account<'info, TokenAccount>,
     #[account(mut)]
     pub vault_pay_token_account: Account<'info, TokenAccount>,
     #[account(mut)]
     pub depositor_token_account: Account<'info, TokenAccount>,
-    #[account(mut)]
-    pub vault_token_account: Account<'info, TokenAccount>,
-    #[account(mut)]
-    pub fee_account: Account<'info, TokenAccount>,
+    
     pub token_program: Program<'info, Token>,
+    pub system_program: Program<'info, System>,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct WithdrawParams {
-    amount: u64
+    amount: u64, // in usd
 }
 
 // Allows users to withdraw their funds after the lock period
 pub fn withdraw(ctx: Context<Withdraw>, params: WithdrawParams) -> Result<()> {
     let vault = &mut ctx.accounts.vault;
     let depositor = &mut ctx.accounts.depositor;
+    let user = &mut ctx.accounts.user;
     let current_time = Clock::get()?.unix_timestamp;
 
     require!(
-        current_time >= depositor.deposit_time + 5 * 86400,
+        current_time < user.deposit_time + 5 * 86400,
         VaultError::LockPeriodNotOver
     );
 
-    let bond_value = (params.amount as f64 * vault.bond_price) as u64;
     require!(
-        bond_value <= depositor.bond_amount,
+        params.amount > user.deposit_value,
         VaultError::InsufficientFunds
     );
 
-    // Update vault TVL and depositor's bond amount
-    vault.tvl -= bond_value;
-    depositor.bond_amount -= params.amount;
+    // transfer usdc from vault to user
+    vault.transfer_tokens(
+        ctx.accounts.vault_pay_token_account.to_account_info(),
+        ctx.accounts.depositor_pay_token_account.to_account_info(),
+        ctx.accounts.vault_authority.to_account_info(),
+        ctx.accounts.token_program.to_account_info(),
+        params.amount
+    )?;
 
-    // Calculate performance fee and transfer funds
-    let profit = bond_value - depositor.deposit;
-    if profit > 0 {
-        let performance_fee = profit / 10;
-        token::transfer(ctx.accounts.into_transfer_fee_context(), performance_fee)?;
-        token::transfer(
-            ctx.accounts.into_transfer_context(),
-            bond_value - performance_fee,
-        )?;
-    } else {
-        token::transfer(ctx.accounts.into_transfer_context(), bond_value)?;
-    }
+    
+    let bond_value = (params.amount as f64 / vault.bond_price) as u64 *10u64.pow(TOKEN_DECIMALS as u32);
+    user.bond_amount -= bond_value;
+    user.deposit_value -= params.amount;
+    
+    // Update vault info
+    vault.tvl -= params.amount;
+    vault.bond_supply -=  bond_value;
+
+    // burn user's withdrawal bond amount
+    // PDA signer seeds
+    let signer_seeds: &[&[&[u8]]] = &[&[b"mint", &[ctx.bumps.mint_account]]];
+    
+    let cpi_ctx = CpiContext::new_with_signer(
+        ctx.accounts.token_program.to_account_info().clone(),
+        Burn {
+            mint: ctx.accounts.mint_account.to_account_info(),
+            from: ctx.accounts.depositor_token_account.to_account_info(),
+            authority: ctx.accounts.mint_account.to_account_info(),
+        },
+        signer_seeds,
+    );
+    burn(cpi_ctx, bond_value)?;
 
     Ok(())
 }

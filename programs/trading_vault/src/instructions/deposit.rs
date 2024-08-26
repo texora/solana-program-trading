@@ -1,11 +1,15 @@
 use anchor_lang::prelude::*;
-use anchor_spl::{associated_token::AssociatedToken, token::{self, mint_to, Mint, MintTo, Token, TokenAccount}};
+use anchor_spl::{associated_token::AssociatedToken, token::{mint_to, Mint, MintTo, Token, TokenAccount}};
 
-use crate::{User, Vault};
+use crate::{User, Vault, TOKEN_DECIMALS};
 
 #[derive(Accounts)]
 pub struct Deposit<'info> {
-    #[account(mut)]
+    #[account(
+        mut,
+        seeds = [b"vault", vault.leader.key().as_ref()],
+        bump,
+    )]
     pub vault: Account<'info, Vault>,
     #[account(
         seeds = [b"vault_authority"],
@@ -52,7 +56,7 @@ pub struct Deposit<'info> {
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct DepositParams {
-    amount: u64,
+    amount: u64, // in usd
 }
 
 // Allows any user to deposit into the vault
@@ -68,14 +72,13 @@ pub fn deposit(ctx: Context<Deposit>, params: DepositParams) -> Result<()> {
         params.amount
     )?;
 
-    let bond_amount = (params.amount as f64 / vault.bond_price) as u64 * 10u64.pow(ctx.accounts.mint_account.decimals as u32);
+    let bond_amount = (params.amount as f64 / vault.bond_price) as u64 * 10u64.pow(TOKEN_DECIMALS as u32);
 
     // PDA signer seeds
     let signer_seeds: &[&[&[u8]]] = &[&[b"mint", &[ctx.bumps.mint_account]]];
-    let signer = &[&signer_seeds[..]];
 
     msg!(">>> mint token and assign it to depositor");
-    mint_to(
+    let _ = mint_to(
         CpiContext::new_with_signer(
             ctx.accounts.token_program.to_account_info(),
             MintTo {
