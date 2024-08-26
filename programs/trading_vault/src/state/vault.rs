@@ -5,6 +5,7 @@ use anchor_spl::token::Transfer;
 pub struct Vault {
     pub strategy_id: String,
     pub bond_price: f64,
+    pub bond_supply: u64,
     pub tvl: u64,
     pub leader: Pubkey,
     pub is_trading_paused: bool,

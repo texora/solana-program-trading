@@ -141,11 +141,8 @@ pub fn initialize_vault(
     )?;
     msg!("Token created successfully.");
 
-    let bond_amount = params.initial_deposit / 1;
-    user.deposit_value = params.initial_deposit;
-    user.bond_amount = bond_amount;
-    user.deposit_time = Clock::get()?.unix_timestamp;
-
+    let bond_amount = params.initial_deposit / 1 * 10u64.pow(ctx.accounts.mint_account.decimals as u32);
+    
     // Invoke the mint_to instruction on the token program
     mint_to(
         CpiContext::new(
@@ -157,10 +154,14 @@ pub fn initialize_vault(
             },
         )
         .with_signer(signer_seeds), // using PDA to sign
-        bond_amount * 10u64.pow(ctx.accounts.mint_account.decimals as u32), // Mint tokens, adjust for decimals
+        bond_amount  // Mint tokens
     )?;
     msg!("Token minted successfully.");
-
+    
+    user.deposit_value = params.initial_deposit;
+    user.bond_amount = bond_amount;
+    vault.bond_supply = bond_amount;
+    user.deposit_time = Clock::get()?.unix_timestamp;
 
     Ok(())
 }
