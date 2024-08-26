@@ -22,18 +22,28 @@ pub struct Deposit<'info> {
         space = User::LEN
     )]
     pub user: Account<'info, User>,
-    #[account(mut)]
-    pub mint: Account<'info, Mint>,
+    // Mint account address is a PDA
+    #[account(
+        mut,
+        seeds = [b"mint"],
+        bump
+    )]
+    pub mint_account: Account<'info, Mint>,
     // payment token accounts for deposit
     #[account(mut)]
     pub depositor_pay_token_account: Account<'info, TokenAccount>,
     #[account(mut)]
     pub vault_pay_token_account: Account<'info, TokenAccount>,
     // governance token accounts
-    #[account(mut)]
+    // Create Associated Token Account, if needed
+    // This is the account that will hold the minted tokens
+    #[account(
+        init_if_needed,
+        payer = depositor,
+        associated_token::mint = mint_account,
+        associated_token::authority = depositor,
+    )]
     pub depositor_token_account: Account<'info, TokenAccount>,
-    #[account(mut)]
-    pub vault_token_account: Account<'info, TokenAccount>,
 
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
@@ -59,27 +69,31 @@ pub fn deposit(ctx: Context<Deposit>, params: DepositParams) -> Result<()> {
 
     let bond_amount = (params.amount as f64 / vault.bond_price) as u64;
 
-    let seeds = &["vault_authority".as_bytes(), &[ctx.bumps.vault_authority]];
-    let signer = [&seeds[..]];
+    // PDA signer seeds
+    let signer_seeds: &[&[&[u8]]] = &[&[b"mint", &[ctx.bumps.mint_account]]];
+    let signer = &[&signer_seeds[..]];
 
+    msg!(">>> mint token and assign it to depositor");
     mint_to(
         CpiContext::new_with_signer(
             ctx.accounts.token_program.to_account_info(),
             MintTo {
-                authority: ctx.accounts.vault_authority.to_account_info(),
+                authority: ctx.accounts.mint_account.to_account_info(),
                 to: ctx.accounts.depositor_token_account.to_account_info(),
-                mint: ctx.accounts.mint.to_account_info()
+                mint: ctx.accounts.mint_account.to_account_info()
             },
-            &signer
+            signer_seeds
         ),
-        bond_amount
+        bond_amount * 10u64.pow(ctx.accounts.mint_account.decimals as u32), 
     );
 
     vault.tvl += params.amount;
-    
+
     user.deposit_value += params.amount;
     user.bond_amount += bond_amount;
     user.deposit_time = Clock::get()?.unix_timestamp;
+
+    // recalculate bond price
 
     Ok(())
 }
