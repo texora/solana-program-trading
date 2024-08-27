@@ -18,6 +18,7 @@ pub struct ClosePosition<'info> {
         )]
     pub vault_authority: AccountInfo<'info>,
     pub leader: Signer<'info>,
+    /// CHECK:
     #[account(mut)]
     pub depositor: AccountInfo<'info>,
     #[account(
