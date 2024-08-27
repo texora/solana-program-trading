@@ -11,6 +11,7 @@ pub struct ClosePosition<'info> {
         bump,
     )]
     pub vault: Account<'info, Vault>,
+    /// CHECK:
     #[account(
         seeds = [b"vault_authority"],
         bump,
@@ -69,7 +70,7 @@ pub fn close_position(ctx: Context<ClosePosition>) -> Result<()> {
         )?;
 
         vault.tvl -= performance_fee;
-        bond_amount += (performance_fee as f64 / vault.bond_price) as u64 *10u64.pow(TOKEN_DECIMALS as u32);
+        bond_amount += (performance_fee / vault.bond_price) as u64 *10u64.pow(TOKEN_DECIMALS as u32);
 
     }
     // burn user's withdrawal bond amount

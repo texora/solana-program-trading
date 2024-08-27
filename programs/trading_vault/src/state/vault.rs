@@ -4,7 +4,7 @@ use anchor_spl::token::Transfer;
 #[account]
 pub struct Vault {
     pub strategy_id: String,
-    pub bond_price: f64,
+    pub bond_price: u64,
     pub bond_supply: u64,
     pub tvl: u64,
     pub deposit_value: u64,

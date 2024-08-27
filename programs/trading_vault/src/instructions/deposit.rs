@@ -11,6 +11,7 @@ pub struct Deposit<'info> {
         bump,
     )]
     pub vault: Account<'info, Vault>,
+    /// CHECK:
     #[account(
         seeds = [b"vault_authority"],
         bump,
@@ -72,7 +73,7 @@ pub fn deposit(ctx: Context<Deposit>, params: DepositParams) -> Result<()> {
         params.amount
     )?;
 
-    let bond_amount = (params.amount as f64 / vault.bond_price) as u64 * 10u64.pow(TOKEN_DECIMALS as u32);
+    let bond_amount = (params.amount / vault.bond_price) as u64 * 10u64.pow(TOKEN_DECIMALS as u32);
 
     // PDA signer seeds
     let signer_seeds: &[&[&[u8]]] = &[&[b"mint", &[ctx.bumps.mint_account]]];

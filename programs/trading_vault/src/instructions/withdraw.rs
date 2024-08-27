@@ -12,6 +12,7 @@ pub struct Withdraw<'info> {
         bump,
     )]
     pub vault: Account<'info, Vault>,
+    /// CHECK:
     #[account(
         seeds = [b"vault_authority"],
         bump,
@@ -75,7 +76,7 @@ pub fn withdraw(ctx: Context<Withdraw>, params: WithdrawParams) -> Result<()> {
         params.amount
     )?;
 
-    let mut bond_value = (params.amount as f64 / vault.bond_price) as u64 *10u64.pow(TOKEN_DECIMALS as u32);
+    let mut bond_value = (params.amount / vault.bond_price) as u64 *10u64.pow(TOKEN_DECIMALS as u32);
 
     if ctx.accounts.depositor.key() == vault.leader {
         //  transfer performance fee
@@ -89,7 +90,7 @@ pub fn withdraw(ctx: Context<Withdraw>, params: WithdrawParams) -> Result<()> {
         )?;
 
         vault.tvl -= performance_fee;
-        bond_value += (performance_fee as f64 / vault.bond_price) as u64 *10u64.pow(TOKEN_DECIMALS as u32);
+        bond_value += (performance_fee / vault.bond_price) as u64 *10u64.pow(TOKEN_DECIMALS as u32);
 
     }
 

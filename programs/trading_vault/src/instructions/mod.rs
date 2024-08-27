@@ -1,8 +1,11 @@
-pub mod initialize;
-pub use initialize::*;
+pub mod initialize_vault;
+pub use initialize_vault::*;
 
-pub mod  deposit;
-pub use  deposit::*;
+pub mod init_deposit;
+pub use init_deposit::*;
+
+pub mod deposit;
+pub use deposit::*;
 
 pub mod withdraw;
 pub use withdraw::*;
@@ -15,4 +18,3 @@ pub use terminate_vault::*;
 
 pub mod close_position;
 pub use close_position::*;
-
