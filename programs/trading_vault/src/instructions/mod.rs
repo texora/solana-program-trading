@@ -13,6 +13,6 @@ pub use pause_trading::*;
 pub mod terminate_vault;
 pub use terminate_vault::*;
 
-pub mod close_positions;
-pub use close_positions::*;
+pub mod close_position;
+pub use close_position::*;
 
