@@ -6,8 +6,9 @@ use crate::Vault;
 #[derive(Accounts)]
 pub struct TerminateVault<'info> {
     pub leader: Signer<'info>,
+    /// CHECK:
     #[account(mut)]
-    pub backend_wallet: Signer<'info>,
+    pub backend_wallet: AccountInfo<'info>,
 
     #[account(
         seeds = [b"vault", leader.key().as_ref()],
