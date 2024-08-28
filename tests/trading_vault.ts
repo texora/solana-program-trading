@@ -48,28 +48,31 @@ describe('trading_vault', () => {
     //  airdrop sol to each account
     await utils.airDropSol(connection, payer.publicKey)
     console.log(
-      `<<< payer bal = ${await utils.getSolBalance(
-        connection,
-        payer.publicKey
+      `<<< payer bal = ${utils.toUiAmount(
+        await utils.getSolBalance(connection, payer.publicKey),
+        9
       )}`
     )
     await utils.airDropSol(connection, leader.publicKey)
     console.log(
-      `<<< leader bal = ${await utils.getSolBalance(
-        connection,
-        payer.publicKey
+      `<<< leader bal = ${utils.toUiAmount(
+        await utils.getSolBalance(connection, payer.publicKey),
+        9
       )}`
     )
     await utils.airDropSol(connection, backendWallet.publicKey)
     console.log(
-      `<<< backendWallet bal = ${await utils.getSolBalance(
-        connection,
-        backendWallet.publicKey
+      `<<< backendWallet bal = ${utils.toUiAmount(
+        await utils.getSolBalance(connection, backendWallet.publicKey),
+        9
       )}`
     )
     await utils.airDropSol(connection, user.publicKey)
     console.log(
-      `<<< user bal = ${await utils.getSolBalance(connection, user.publicKey)}`
+      `<<< user bal = ${utils.toUiAmount(
+        await utils.getSolBalance(connection, user.publicKey),
+        9
+      )}`
     )
     // create mint of USDC token
     try {
@@ -116,29 +119,33 @@ describe('trading_vault', () => {
       userUsdcATA.toBase58()
     )
 
-    await mintTo(
-      connection,
-      payer,
-      usdcTokenMintPubkey,
-      payerUsdcATA,
-      leader,
-      100 * 1_000_000
-    )
-    console.log(
-      '>>> leader USDC balance = ',
-      await utils.getBalance(connection, payerUsdcATA)
-    )
-    await mintTo(
-      connection,
-      user,
-      usdcTokenMintPubkey,
-      payerUsdcATA,
-      user,
-      100 * 1_000_000
-    )
-    console.log(
-      '>>> user USDC balance = ',
-      await utils.getBalance(connection, payerUsdcATA)
-    )
+    // await mintTo(
+    //   connection,
+    //   payer,
+    //   usdcTokenMintPubkey,
+    //   payerUsdcATA,
+    //   payer, // authority
+    //   100 * 1_000_000
+    // )
+    // console.log(
+    //   '>>> leader USDC balance = ',
+    //   utils.getBalance(connection, payerUsdcATA)
+    // )
+    // await mintTo(
+    //   connection,
+    //   user,
+    //   usdcTokenMintPubkey,
+    //   userUsdcATA,
+    //   payer, // authority
+    //   100 * 1_000_000
+    // )
+    // console.log(
+    //   '>>> user USDC balance = ',
+    //   await utils.getBalance(connection, payerUsdcATA)
+    // )
+  })
+
+  it("initialize", async () => {
+    let vault = utils.
   })
 })
