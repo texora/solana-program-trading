@@ -8,34 +8,17 @@ use crate::{User, Vault, TOKEN_DECIMALS};
 
 #[derive(Accounts)]
 pub struct Deposit<'info> {
-    #[account(
-        mut,
-        seeds = [b"vault", vault.leader.key().as_ref()],
-        bump,
-    )]
+    #[account(mut)]
     pub vault: Account<'info, Vault>,
     /// CHECK:
-    #[account(
-        seeds = [b"vault_authority"],
-        bump,
-        )]
+    #[account(mut)]
     pub vault_authority: AccountInfo<'info>,
     #[account(mut)]
     pub depositor: Signer<'info>,
-    #[account(
-        init_if_needed,
-        seeds = [b"user", depositor.key().as_ref()],
-        bump,
-        payer = depositor,
-        space = User::LEN
-    )]
+    #[account(mut)]
     pub user: Account<'info, User>,
     // Mint account address is a PDA
-    #[account(
-        mut,
-        seeds = [b"mint"],
-        bump
-    )]
+    #[account(mut)]
     pub mint_account: Account<'info, Mint>,
     // payment token accounts for deposit
     #[account(mut)]
@@ -45,12 +28,7 @@ pub struct Deposit<'info> {
     // governance token accounts
     // Create Associated Token Account, if needed
     // This is the account that will hold the minted tokens
-    #[account(
-        init_if_needed,
-        payer = depositor,
-        associated_token::mint = mint_account,
-        associated_token::authority = depositor,
-    )]
+    #[account(mut)]
     pub depositor_token_account: Account<'info, TokenAccount>,
 
     pub token_program: Program<'info, Token>,
