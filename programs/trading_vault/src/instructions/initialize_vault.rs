@@ -14,41 +14,18 @@ pub struct InitializeVault<'info> {
     #[account(mut)]
     pub backend_wallet: Signer<'info>,
 
-    #[account(
-        init,
-        seeds = [b"vault", leader.key().as_ref()],
-        bump,
-        payer = leader, 
-        space = Vault::LEN
-    )]
+    #[account(mut)]
     pub vault: Account<'info, Vault>,
     /// CHECK:
-    #[account(
-        seeds = [b"vault_authority"],
-        bump,
-        )]
+    #[account(mut)]
     pub vault_authority: AccountInfo<'info>,
 
     // Create mint account
     // Same PDA as address of the account and mint/freeze authority
-    #[account(
-        init,
-        seeds = [b"mint"],
-        bump,
-        payer = backend_wallet,
-        mint::decimals = TOKEN_DECIMALS,
-        mint::authority = mint_account.key(),
-        mint::freeze_authority = mint_account.key(),
-
-    )]
+    #[account(mut)]
     pub mint_account: Account<'info, Mint>,
     /// CHECK: Validate address by deriving pda
-    #[account(
-        mut,
-        seeds = [b"metadata", token_metadata_program.key().as_ref(), mint_account.key().as_ref()],
-        bump,
-        seeds::program = token_metadata_program.key(),
-    )]
+    #[account(mut)]
     pub metadata_account: UncheckedAccount<'info>,
         
     pub system_program: Program<'info, System>,
@@ -76,40 +53,6 @@ pub fn initialize_vault(
     vault.is_trading_paused = false;
 
     msg!("Creating metadata account");
-    // PDA signer seeds
-    let signer_seeds: &[&[&[u8]]] = &[&[b"mint", &[ctx.bumps.mint_account]]];
-
-    // Cross Program Invocation (CPI) signed by PDA
-    // Invoking the create_metadata_account_v3 instruction on the token metadata program
-    create_metadata_accounts_v3(
-        CpiContext::new(
-            ctx.accounts.token_metadata_program.to_account_info(),
-            CreateMetadataAccountsV3 {
-                metadata: ctx.accounts.metadata_account.to_account_info(),
-                mint: ctx.accounts.mint_account.to_account_info(),
-                mint_authority: ctx.accounts.mint_account.to_account_info(), // PDA is mint authority
-                update_authority: ctx.accounts.mint_account.to_account_info(), // PDA is update authority
-                payer: ctx.accounts.backend_wallet.to_account_info(),
-                system_program: ctx.accounts.system_program.to_account_info(),
-                rent: ctx.accounts.rent.to_account_info(),
-            },
-        )
-        .with_signer(signer_seeds),
-        DataV2 {
-            name: "token_name".to_owned(),
-            symbol: "token_symbol".to_owned(),
-            uri: "token_uri".to_owned(),
-            seller_fee_basis_points: 0,
-            creators: None,
-            collection: None,
-            uses: None,
-        },
-        false, // Is mutable
-        true,  // Update authority is signer
-        None,  // Collection details
-    )?;
-    msg!("Token created successfully.");
-
-
+    
     Ok(())
 }
