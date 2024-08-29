@@ -146,6 +146,6 @@ describe('trading_vault', () => {
   })
 
   it("initialize", async () => {
-    let vault = utils.
+    let vault = 
   })
 })

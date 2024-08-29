@@ -1,5 +1,8 @@
 use anchor_lang::prelude::*;
-use anchor_spl::{associated_token::AssociatedToken, token::{mint_to, Mint, MintTo, Token, TokenAccount}};
+use anchor_spl::{
+    associated_token::AssociatedToken,
+    token::{mint_to, Mint, MintTo, Token, TokenAccount},
+};
 
 use crate::{User, Vault, TOKEN_DECIMALS};
 
@@ -66,11 +69,11 @@ pub fn deposit(ctx: Context<Deposit>, params: DepositParams) -> Result<()> {
     let user = &mut ctx.accounts.user;
 
     vault.transfer_tokens_from_user(
-        ctx.accounts.depositor_pay_token_account.to_account_info(), 
+        ctx.accounts.depositor_pay_token_account.to_account_info(),
         ctx.accounts.vault_pay_token_account.to_account_info(),
-        ctx.accounts.depositor.to_account_info(), 
+        ctx.accounts.depositor.to_account_info(),
         ctx.accounts.token_program.to_account_info(),
-        params.amount
+        params.amount,
     )?;
 
     let bond_amount = (params.amount / vault.bond_price) as u64 * 10u64.pow(TOKEN_DECIMALS as u32);
@@ -85,11 +88,11 @@ pub fn deposit(ctx: Context<Deposit>, params: DepositParams) -> Result<()> {
             MintTo {
                 authority: ctx.accounts.mint_account.to_account_info(),
                 to: ctx.accounts.depositor_token_account.to_account_info(),
-                mint: ctx.accounts.mint_account.to_account_info()
+                mint: ctx.accounts.mint_account.to_account_info(),
             },
-            signer_seeds
+            signer_seeds,
         ),
-        bond_amount, 
+        bond_amount,
     );
 
     vault.tvl += params.amount;
@@ -101,7 +104,8 @@ pub fn deposit(ctx: Context<Deposit>, params: DepositParams) -> Result<()> {
     user.deposit_time = Clock::get()?.unix_timestamp;
 
     // recalculate bond price according to strategy
-
+    let profit = vault.tvl - vault.deposit_value;
+    vault.bond_price = (vault.deposit_value + profit * 80 / 100) / vault.bond_supply;
 
     Ok(())
 }

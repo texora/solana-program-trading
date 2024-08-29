@@ -35,6 +35,10 @@ pub mod trading_vault {
         pause_trading(ctx)
     }
 
+    pub fn vault_start_trading(ctx: Context<StartTrading>) -> Result<()> {
+        start_trading(ctx)
+    }
+
     pub fn vault_close_position(ctx: Context<ClosePosition>) -> Result<()> {
         close_position(ctx)
     }

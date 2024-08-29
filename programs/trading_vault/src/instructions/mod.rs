@@ -10,6 +10,9 @@ pub use deposit::*;
 pub mod withdraw;
 pub use withdraw::*;
 
+pub mod start_trading;
+pub use start_trading::*;
+
 pub mod pause_trading;
 pub use pause_trading::*;
 

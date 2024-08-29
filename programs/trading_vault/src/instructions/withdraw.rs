@@ -119,6 +119,8 @@ pub fn withdraw(ctx: Context<Withdraw>, params: WithdrawParams) -> Result<()> {
     burn(cpi_ctx, bond_value)?;
 
     // recalculate bond price
+    let profit = vault.tvl - vault.deposit_value;
+    vault.bond_price = (vault.deposit_value + profit * 80 / 100) / vault.bond_supply;
 
     Ok(())
 }

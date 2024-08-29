@@ -128,5 +128,7 @@ pub fn init_deposit(
     vault.bond_supply = bond_amount;
     user.deposit_time = Clock::get()?.unix_timestamp;
 
+    vault.bond_price = vault.tvl / vault.bond_supply;
+
     Ok(())
 }
